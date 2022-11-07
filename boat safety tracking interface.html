@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css" integrity="sha256-sA+zWATbFveLLNqWO2gtiw3HL/lh1giY/Inf1BJ0z14=" crossorigin="" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.9.2/dist/leaflet.js" integrity="sha256-o9N1jGDZrf5tS+Ft4gbIK7mYMipq9lqpVJ91xHSyKhg=" crossorigin=""></script>
+
+
+    <script src="https://www.gstatic.com/firebasejs/3.2.0/firebase.js"></script>
+
+    <script>
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+            apiKey: "AIzaSyCqXkaN8-QgHHSv5uSyu_kEeK6PXI3qggQ",
+            authDomain: "boat-safety-tracking.firebaseapp.com",
+            databaseURL: "https://boat-safety-tracking-default-rtdb.firebaseio.com",
+            projectId: "boat-safety-tracking",
+            storageBucket: "boat-safety-tracking.appspot.com",
+            messagingSenderId: "209483795826",
+            appId: "1:209483795826:web:edf640332e2edd0ef921eb",
+            measurementId: "G-T1HZB0HT6G"
+        };
+
+
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <style>
+        #map {
+            height: 100%;
+        }
+
+        /* Optional: Makes the sample page fill the window. */
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+
+    <script>
+        var map = L.map('map').setView([0.341796, 32.594374], 13);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+    </script>
+
+
+
+
+    <script>
+        // {"alt":"0.00","date":"10/29/2022","lat":"0.000000","lng":"0.000000","satelites":"0","speed":"0.00","time":"22:2:46.0"}
+
+        function mapit(lats, long, date, satelites, speed, time) {
+
+            // Creating a marker
+            var marker= L.marker([lats, long])
+                .bindTooltip("John's boat", {
+                    permanent: true,
+                    direction: 'right'
+                });
+
+            // Adding marker to the map
+            marker.addTo(map);
+            
+            fetch(`https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode?f=pjson&langCode=EN&location=${long},${lats}`)
+                .then(res => res.json())
+                .then(myJson => {
+                    marker.bindPopup("<b>Date:" + date + " time:" + time + "</b><br><b>Sat:" + satelites + " speed:" + speed + "</b><br>" + myJson.address.LongLabel);
+
+                });
+
+            map.flyTo([lats, long], 18);
+        }
+
+
+        
+
+            var num = 0;
+            // once() method
+            firebase.database().ref('data').on('value', (snap) => {
+                for (var key in snap.val()) {
+
+                    if (key == "lat") {
+                        var latitude = snap.val()[key];
+                        num = num + 1;
+                    }
+                    if (key == "lng") {
+                        var longitude = snap.val()[key];
+                        num = num + 1;
+                    }
+                    if (key == "date") {
+                        var date = snap.val()[key];
+                        num = num + 1;
+                    }
+                    if (key == "satelites") {
+                        var satelites = snap.val()[key];
+                        num = num + 1;
+                    }
+                    if (key == "speed") {
+                        var speed = snap.val()[key];
+                        num = num + 1;
+                    }
+                    if (key == "time") {
+                        var time = snap.val()[key];
+                        num = num + 1;
+                    }
+
+
+                    if (num == 6) {
+                      num=0;
+                        mapit(latitude, longitude, date, satelites, speed, time);
+                        
+                    }
+
+
+                }
+
+            });
+
+
+
+
+       
+
+
+        //window.onload(fetchalldata());
+    </script>
+
+
+</body>
+
+</html>
